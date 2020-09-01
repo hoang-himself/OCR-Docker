@@ -2,7 +2,6 @@
 import sys
 import os
 import time
-import argparse
 
 import torch
 import torch.nn as nn
@@ -16,19 +15,19 @@ from skimage import io
 import numpy as np
 import craft_utils
 import imgproc
-import file_utils
-import json
-import zipfile
 
 from craft import CRAFT
-#OrderedDict: dictionary subclass that remembers the order that keys were first inserted
+# OrderedDict: dictionary subclass that remembers the order that keys were first inserted
 from collections import OrderedDict
 import copy
-import math
 
 import pytesseract
 
 # Define CRAFT function
+UNCLASSIFIED = -2
+NOISE = -1
+
+
 def copyStateDict(state_dict):
     if list(state_dict.keys())[0].startswith("module"):
         start_idx = 1
@@ -40,21 +39,24 @@ def copyStateDict(state_dict):
         new_state_dict[name] = v
     return new_state_dict
 
+
 def str2bool(v):
     return v.lower() in ("yes", "y", "true", "t", "1")
 
-def test_net(net, image, text_threshold, link_threshold, low_text, cuda, poly, refine_net=None):
+
+def test_net(net, canvas_size, mag_ratio, image, text_threshold, link_threshold, low_text, cuda, poly, refine_net=None):
     t0 = time.time()
     # resize
-    img_resized, target_ratio, size_heatmap = imgproc.resize_aspect_ratio(image, canvas_size, interpolation=cv2.INTER_LINEAR, mag_ratio=mag_ratio)
+    img_resized, target_ratio, size_heatmap = imgproc.resize_aspect_ratio(
+        image, canvas_size, interpolation=cv2.INTER_LINEAR, mag_ratio=mag_ratio)
     ratio_h = ratio_w = 1 / target_ratio
 
     # preprocessing
     x = imgproc.normalizeMeanVariance(img_resized)
     x = torch.from_numpy(x).permute(2, 0, 1)    # [h, w, c] to [c, h, w]
     x = Variable(x.unsqueeze(0))                # [c, h, w] to [b, c, h, w]
-    #print("X: ",x)
-  
+    # print("X: ",x)
+
     if cuda:
         x = x.cuda()
 
@@ -63,8 +65,8 @@ def test_net(net, image, text_threshold, link_threshold, low_text, cuda, poly, r
         y, feature = net(x)
 
     # make score and link map
-    score_text = y[0,:,:,0].cpu().data.numpy()
-    score_link = y[0,:,:,1].cpu().data.numpy()
+    score_text = y[0, :, :, 0].cpu().data.numpy()
+    score_link = y[0, :, :, 1].cpu().data.numpy()
     # print("Score_text: ", score_text)
     # print("Score_link: ", score_link)
 
@@ -72,18 +74,20 @@ def test_net(net, image, text_threshold, link_threshold, low_text, cuda, poly, r
     if refine_net is not None:
         with torch.no_grad():
             y_refiner = refine_net(y, feature)
-        score_link = y_refiner[0,:,:,0].cpu().data.numpy()
+        score_link = y_refiner[0, :, :, 0].cpu().data.numpy()
     t0 = time.time() - t0
     t1 = time.time()
 
     # Post-processing
-    boxes, polys = craft_utils.getDetBoxes(score_text, score_link, text_threshold, link_threshold, low_text, poly)
+    boxes, polys = craft_utils.getDetBoxes(
+        score_text, score_link, text_threshold, link_threshold, low_text, poly)
 
     # coordinate adjustment
     boxes = craft_utils.adjustResultCoordinates(boxes, ratio_w, ratio_h)
     polys = craft_utils.adjustResultCoordinates(polys, ratio_w, ratio_h)
     for k in range(len(polys)):
-        if polys[k] is None: polys[k] = boxes[k]
+        if polys[k] is None:
+            polys[k] = boxes[k]
     t1 = time.time() - t1
 
     # render results (optional)
@@ -94,18 +98,16 @@ def test_net(net, image, text_threshold, link_threshold, low_text, cuda, poly, r
     # plt.imshow(ret_score_text)
     # print("Bounding Box: ", polys)
 
-    #if show_time : print("\ninfer/postproc time : {:.3f}/{:.3f}".format(t0, t1))
+    # if show_time : print("\ninfer/postproc time : {:.3f}/{:.3f}".format(t0, t1))
 
     return boxes, polys, ret_score_text
 
-UNCLASSIFIED = -2
-NOISE = -1
 
-# G-DBSCAN Algorithm
 class Point:
     '''
     Each point have 2 main values: coordinate(lat, long) and cluster_id
     '''
+
     def __init__(self, x, y, id):
         self.x = x
         self.y = y
@@ -116,12 +118,28 @@ class Point:
         return '(x:{}, y:{}, id:{}, cluster:{})' \
             .format(self.x, self.y, self.id, self.cluster_id)
 
-#In G-DBScan we use elip instead of circle to cluster (because we mainly use for horizontal text image --> elip is more useful)
+# In G-DBScan we use eclipse instead of circle to cluster (because we mainly use for horizontal text image --> elip is more useful)
+
+
 def n_pred(p1, p2):
-     return (p1.x - p2.x)**2/2000 + (p1.y - p2.y)**2/130 <= 1
+    # return (p1.x - p2.x)**2/160000 + (p1.y - p2.y)**2/2500 <= 1
+    #print(p1.x -p2.x)
+    #print(p1.y -p2.y)
+    # return (p1.x - p2.x)**2/50000 + (p1.y - p2.y)**2/1500 <= 1
+    # return (p1.x - p2.x)**2/20000 + (p1.y - p2.y)**2/1300 <= 1
+    # return (p1.x - p2.x)**2/2000 + (p1.y - p2.y)**2/130 <= 1
+    return (p1.x - p2.x)**2/500 + (p1.y - p2.y)**2/70 <= 1
+    # return (p1.x - p2.x)**2/3500 + (p1.y - p2.y)**2/150 <= 1
+    # return (p1.x - p2.x)**2/7000 + (p1.y - p2.y)**2/1300 <= 1
+    # return (p1.x - p2.x)**2/8000 + (p1.y - p2.y)**2/300 <= 1
+    # return (p1.x - p2.x)**2/17000 + (p1.y - p2.y)**2/300 <= 1
+    # return (p1.x - p2.x)**2/13000 + (p1.y - p2.y)**2/250 <= 1
+    # return (p1.x - p2.x)**2/15000 + (p1.y - p2.y)**2/180 <= 1
+
 
 def w_card(points):
     return len(points)
+
 
 def GDBSCAN(points, n_pred, min_card, w_card):
     points = copy.deepcopy(points)
@@ -177,6 +195,7 @@ def _core_point(w_card, min_card, points):
 
 class Points:
     'Contain list of Point'
+
     def __init__(self, points):
         self.points = points
 
@@ -204,120 +223,115 @@ class Points:
     def labels(self):
         return set(map(lambda x: x.cluster_id, self.points))
 
-# Time to execute
-
-# First the CRAFT model
-# Initialize CRAFT parameters
-text_threshold = 0.7
-low_text = 0.4
-link_threshold =0.4
-# cuda = True
-cuda=False
-canvas_size =1280
-mag_ratio =1.5
-#if text image present curve --> poly=true
-poly=False
-refine=False
-show_time=False
-refine_net = None
-#path of file pre-trained model of Craft
-trained_model_path = './app/CRAFT/craft_mlt_25k.pth'
-
-net = CRAFT()
-net.load_state_dict(copyStateDict(torch.load(trained_model_path, map_location='cpu')))
-# maybe we don't need to line below
-#net.eval()
 
 def applyCraft(image_file):
-  image = imgproc.loadImage(image_file)
+    # Initialize CRAFT parameters
+    text_threshold = 0.7
+    low_text = 0.4
+    link_threshold = 0.4
+    cuda = False
+    canvas_size = 1280
+    mag_ratio = 1.5
+    # if text image present curve --> poly=true
+    poly = False
+    refine = False
+    show_time = False
+    refine_net = None
+    trained_model_path = './app/CRAFT/craft_mlt_25k.pth'
 
-  poly=False
-  refine=False
-  show_time=False
-  refine_net = None
-  bboxes, polys, score_text = test_net(net, image,text_threshold, link_threshold, low_text, cuda, poly, refine_net)
+    net = CRAFT()
+    net.load_state_dict(copyStateDict(torch.load(
+        trained_model_path, map_location='cpu')))
+    net.eval()
 
-  return polys
+    image = imgproc.loadImage(image_file)
 
-def clusterCraftBox(polys):
-  # Compute coordinate of central point in each bounding box returned by CRAFT
-  # Purpose: easier for us to make cluster in G-DBScan step
-  poly_indexes = {}
-  central_poly_indexes = []
-  for i in range(len(polys)):
-    poly_indexes[i] =  polys[i]
-    x_central = (polys[i][0][0] + polys[i][1][0] +polys[i][2][0] + polys[i][3][0])/4
-    y_central = (polys[i][0][1] + polys[i][1][1] +polys[i][2][1] + polys[i][3][1])/4
-    central_poly_indexes.append({i: [int(x_central), int(y_central)]})
+    poly = False
+    refine = False
+    show_time = False
+    refine_net = None
+    bboxes, polys, score_text = test_net(
+        net, canvas_size, mag_ratio, image, text_threshold, link_threshold, low_text, cuda, poly, refine_net)
 
-  # for i in central_poly_indexes:
-  #   print(i)
+    # Compute coordinate of central point in each bounding box returned by CRAFT
+    # Purpose: easier for us to make cluster in G-DBScan step
+    poly_indexes = {}
+    central_poly_indexes = []
+    for i in range(len(polys)):
+        poly_indexes[i] = polys[i]
+        x_central = (polys[i][0][0] + polys[i][1][0] +
+                     polys[i][2][0] + polys[i][3][0])/4
+        y_central = (polys[i][0][1] + polys[i][1][1] +
+                     polys[i][2][1] + polys[i][3][1])/4
+        central_poly_indexes.append({i: [int(x_central), int(y_central)]})
 
-  # For each of these cordinates convert them to new Point instances
-  X = []
+    # for i in central_poly_indexes:
+    #   print(i)
 
-  for idx, x in enumerate(central_poly_indexes):
-      point = Point(x[idx][0],x[idx][1], idx)
-      X.append(point)
+    # For each of these cordinates convert them to new Point instances
+    X = []
 
-  # Cluster these central points
-  clustered = GDBSCAN(Points(X), n_pred, 1, w_card)
+    for idx, x in enumerate(central_poly_indexes):
+        point = Point(x[idx][0], x[idx][1], idx)
+        X.append(point)
 
-  cluster_values = []
-  for cluster in clustered:
-      sort_cluster = sorted(cluster, key = lambda elem: (elem.x, elem.y))
-      max_point_id = sort_cluster[len(sort_cluster) - 1].id
-      min_point_id = sort_cluster[0].id
-      max_rectangle = sorted(poly_indexes[max_point_id], key = lambda elem: (elem[0], elem[1]))
-      min_rectangle = sorted(poly_indexes[min_point_id], key = lambda elem: (elem[0], elem[1]))
+    # Cluster these central points
+    clustered = GDBSCAN(Points(X), n_pred, 1, w_card)
 
-      right_above_max_vertex = max_rectangle[len(max_rectangle) -1]
-      right_below_max_vertex = max_rectangle[len(max_rectangle) -2]
-      left_above_min_vertex = min_rectangle[0] 
-      left_below_min_vertex = min_rectangle[1]
-      
-      if (int(min_rectangle[0][1]) > int(min_rectangle[1][1])): 
-          left_above_min_vertex = min_rectangle[1]
-          left_below_min_vertex =  min_rectangle[0]
-      if (int(max_rectangle[len(max_rectangle) -1][1]) < int(max_rectangle[len(max_rectangle) -2][1])):
-          right_above_max_vertex = max_rectangle[len(max_rectangle) -2]
-          right_below_max_vertex = max_rectangle[len(max_rectangle) -1]
-          
-          
-      cluster_values.append([left_above_min_vertex, left_below_min_vertex, right_above_max_vertex, right_below_max_vertex])
+    cluster_values = []
+    for cluster in clustered:
+        sort_cluster = sorted(cluster, key=lambda elem: (elem.x, elem.y))
+        max_point_id = sort_cluster[len(sort_cluster) - 1].id
+        min_point_id = sort_cluster[0].id
+        max_rectangle = sorted(
+            poly_indexes[max_point_id], key=lambda elem: (elem[0], elem[1]))
+        min_rectangle = sorted(
+            poly_indexes[min_point_id], key=lambda elem: (elem[0], elem[1]))
 
-  return cluster_values
+        right_above_max_vertex = max_rectangle[len(max_rectangle) - 1]
+        right_below_max_vertex = max_rectangle[len(max_rectangle) - 2]
+        left_above_min_vertex = min_rectangle[0]
+        left_below_min_vertex = min_rectangle[1]
 
+        if (int(min_rectangle[0][1]) > int(min_rectangle[1][1])):
+            left_above_min_vertex = min_rectangle[1]
+            left_below_min_vertex = min_rectangle[0]
+        if (int(max_rectangle[len(max_rectangle) - 1][1]) < int(max_rectangle[len(max_rectangle) - 2][1])):
+            right_above_max_vertex = max_rectangle[len(max_rectangle) - 2]
+            right_below_max_vertex = max_rectangle[len(max_rectangle) - 1]
 
-def img2Text(cluster_values, image_file):
-  image = imgproc.loadImage(image_file)
-  img = np.array(image[:,:,::-1])
-  img = img.astype('uint8')
-  ocr_res = []
-  for i, box in enumerate(cluster_values):
-      poly = np.array(box).astype(np.int32).reshape((-1))
-      poly = poly.reshape(-1, 2)
+        cluster_values.append([left_above_min_vertex, left_below_min_vertex,
+                               right_above_max_vertex, right_below_max_vertex])
 
-      rect = cv2.boundingRect(poly)
-      x,y,w,h = rect
-      croped = img[y:y+h, x:x+w].copy()
-      
-  #     # Preprocess croped segment
-      croped = cv2.resize(croped, None, fx=5, fy=5, interpolation=cv2.INTER_LINEAR)
-      croped = cv2.cvtColor(croped, cv2.COLOR_BGR2GRAY)
-      croped = cv2.GaussianBlur(croped, (3, 3), 0)
-      croped = cv2.bilateralFilter(croped,5,25,25)
-      croped = cv2.dilate(croped, None, iterations=1)
-      croped = cv2.threshold(croped, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-  #     croped = cv2.threshold(croped, 90, 255, cv2.THRESH_BINARY)[1]
-      #croped = cv2.cvtColor(croped, cv2.COLOR_BGR2RGB)
+    image = imgproc.loadImage(image_file)
+    img = np.array(image[:, :, ::-1])
+    img = img.astype('uint8')
+    ocr_res = []
+    for i, box in enumerate(cluster_values):
+        poly = np.array(box).astype(np.int32).reshape((-1))
+        poly = poly.reshape(-1, 2)
 
-      ocr_res.append(pytesseract.image_to_string(croped, lang='eng'))
+        rect = cv2.boundingRect(poly)
+        x, y, w, h = rect
+        cropped = img[y:y+h, x:x+w].copy()
 
-  return ocr_res
+        # Preprocess cropped segment
+        cropped = cv2.resize(cropped, None, fx=5, fy=5,
+                             interpolation=cv2.INTER_LINEAR)
+        cropped = cv2.cvtColor(cropped, cv2.COLOR_BGR2GRAY)
+        cropped = cv2.GaussianBlur(cropped, (3, 3), 0)
+        cropped = cv2.bilateralFilter(cropped, 5, 25, 25)
+        cropped = cv2.dilate(cropped, None, iterations=1)
+        cropped = cv2.threshold(
+            cropped, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        #cropped = cv2.threshold(cropped, 90, 255, cv2.THRESH_BINARY)[1]
+        #cropped = cv2.cvtColor(cropped, cv2.COLOR_BGR2RGB)
+
+        ocr_res.append(pytesseract.image_to_string(cropped, lang='eng'))
+
+    return ocr_res
+
 
 def text_recognition(image_file):
-  polys = applyCraft(image_file)
-  cluster = clusterCraftBox(polys)
-  input_text = img2Text(cluster, image_file)
-  return input_text
+    input_text = applyCraft(image_file)
+    return input_text

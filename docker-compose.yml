@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  # web:
+  #   build: .
+  #   image: my_image_name
+  #   ports:
+  #     - "8000:80"
+  man:
+    build: .
+    image: my_image_name

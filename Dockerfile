@@ -1,5 +1,4 @@
 FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8-slim
-COPY pic_5.jpg pic_5.jpg
 COPY ./app /app
 RUN pip install --upgrade pip
 RUN pip install -r requirement.txt
@@ -16,4 +15,5 @@ RUN cmake CMakeLists.txt -DCMAKE_BUILD_TYPE=Release
 RUN make
 RUN export PATH="$PATH:`pwd`"
 WORKDIR /
+COPY pic_5.jpg pic_5.jpg
 ENTRYPOINT ["sh","start.sh"]

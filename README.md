@@ -17,3 +17,4 @@ Go to `localhost:8080/` to see result.
 ## Extract latitude, longitude
 Navigate to `localhost:8080/predict/pic_1.jpg?crs=9210` for example.
 All images are saved in root for the mean time.
+Also available at `https://obscure-retreat-69161.herokuapp.com` but there is a problem with memory quota.

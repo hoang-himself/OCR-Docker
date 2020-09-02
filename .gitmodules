@@ -1,0 +1,3 @@
+[submodule "app/imgtxtenh"]
+	path = app/imgtxtenh
+	url = git@github.com:mauvilsa/imgtxtenh.git

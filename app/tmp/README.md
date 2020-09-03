@@ -1,0 +1,1 @@
+Images from Firebase will be stored here temporarily.

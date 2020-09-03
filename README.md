@@ -2,22 +2,18 @@
 A docker repo for building some necessities for backend.
 
 # How to use
-## Build Docker image
+## Run with Docker Compose
 ```
-docker build -t <name_tag> .
+docker-compose up
 ```
 This will take very long on installing torch.
 
-## Execute
-```
-docker run -d -p 8080:80 <name_tag>
-```
-Go to `localhost:8080/` to see result.
+Go to `localhost:5000/` to see result.
 
 ## Extract latitude, longitude
-Navigate to `localhost:8080/predict/pic_1.jpg?crs=9210` for example.
+Navigate to `localhost:5000/predict/pic_1.jpg?crs=9210` for example.
 All images are saved in root for the mean time.
-Also available at `https://obscure-retreat-69161.herokuapp.com` but there is a problem with memory quota.
+Also available at `https://obscure-retreat-69161.herokuapp.com:8080` but there is a problem with memory quota.
 
 # How to get serviceAccountKey
 - Go to your Firebase's project [service accounts](https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk).

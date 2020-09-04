@@ -10,11 +10,9 @@ A docker repo for building some necessities for backend.
 # How to use
 ## Run with Docker Compose
 ```
-docker-compose up -d
+docker-compose build && docker-compose up -d
 ```
-This will take very long on installing torch.
-
-Go to `localhost:5000/` to see result.
+Server is available at `localhost:5000/`.
 
 ## Extract latitude, longitude
 ```localhost:5000/predict/<image>?crs=<crs>```

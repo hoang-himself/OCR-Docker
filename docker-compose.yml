@@ -3,7 +3,7 @@ version: '3'
 services:
     ocr_back:
         build: .
-        container_name: ocr_demo
+        container_name: ocr_back
         ports:
             - 5000:80
 

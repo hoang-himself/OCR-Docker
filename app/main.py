@@ -4,7 +4,10 @@ import sys
 import os
 import subprocess
 import ntpath
-import time
+
+sys.path.append('/app/CRAFT/')
+from text_recognition import text_recognition
+from text_to_coordinate import text_to_coordinate
 
 import firebase_admin
 from firebase_admin import credentials
@@ -20,12 +23,8 @@ bucket = storage.bucket(app=default_app)
 
 app = FastAPI()
 
-sys.path.append('/app/CRAFT/')
-from text_to_coordinate import text_to_coordinate
-from text_recognition import text_recognition
-
-# TODO Use fewer absolute paths
 os.chdir('/app/tmp')
+
 
 @app.get('/')
 def read_root():
@@ -36,9 +35,9 @@ def read_root():
 def read_image(image: str, crs: int):
     online_path = 'images/' + image
     offline_path = '/app/tmp/' + image
-    #blob = bucket.blob(online_path)
-    #with open(offline_path, 'wb') as file_obj:
-    #    blob.download_to_file(file_obj)
+    blob = bucket.blob(online_path)
+    with open(offline_path, 'wb') as file_obj:
+        blob.download_to_file(file_obj)
 
     image = preprocess(offline_path)
 
@@ -60,8 +59,8 @@ def preprocess(image_path: str):
     pre_image_name = 'pre_' + image_name + '.jpg'
 
     # * Using a dedicated folder for image processing, thus the working directory change
-    # ! Very dirty workaround
-    command = '/app/imgtxtenh/imgtxtenh /app/tmp/' + image_name + ' -p /app/tmp/' + pre_image_name
+    command = '/app/imgtxtenh/imgtxtenh /app/tmp/' + \
+        image_name + ' -p /app/tmp/' + pre_image_name
     process = subprocess.Popen(command, shell=True).wait()
     command = 'rm *.png'
     process = subprocess.Popen(command, shell=True).wait()

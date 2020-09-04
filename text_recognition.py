@@ -237,7 +237,7 @@ def applyCraft(image_file):
     refine = False
     show_time = False
     refine_net = None
-    trained_model_path = './app/CRAFT/craft_mlt_25k.pth'
+    trained_model_path = '/app/CRAFT/craft_mlt_25k.pth'
 
     net = CRAFT()
     net.load_state_dict(copyStateDict(torch.load(

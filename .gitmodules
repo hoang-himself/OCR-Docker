@@ -1,3 +1,6 @@
 [submodule "app/imgtxtenh"]
 	path = app/imgtxtenh
 	url = git@github.com:mauvilsa/imgtxtenh.git
+[submodule "app/CRAFT"]
+	path = app/CRAFT
+	url = git@github.com:clovaai/CRAFT-pytorch.git

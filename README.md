@@ -8,12 +8,25 @@ A docker repo for building some necessities for backend.
 ### Not tested with duplicate files on Firebase.
 
 # How to use
-## Run with Docker Compose
+### Download this repository
+### Update submodules
 ```
-docker-compose build && docker-compose up -d
+cd OCR-Docker &&\
+git submodule update
+```
+
+### Run with Docker Compose
+```
+docker-compose up -d
 ```
 Server is available at `localhost:5000/`.
 
 ## Extract latitude, longitude
 ```localhost:5000/predict/<image>?crs=<crs>```
-All images are taken directly from Firebase Storage.
+All images are saved in Firebase Storage.
+
+<br />
+
+---
+
+From [TokisakiKurumi2001](https://github.com/TokisakiKurumi2001) and [Smithienious](https://github.com/Smithienious).

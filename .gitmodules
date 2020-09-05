@@ -1,6 +1,6 @@
-[submodule "app/imgtxtenh"]
-	path = app/imgtxtenh
+[submodule "back/imgtxtenh"]
+	path = back/imgtxtenh
 	url = git@github.com:mauvilsa/imgtxtenh.git
-[submodule "app/CRAFT"]
-	path = app/CRAFT
+[submodule "back/CRAFT"]
+	path = back/CRAFT
 	url = git@github.com:clovaai/CRAFT-pytorch.git

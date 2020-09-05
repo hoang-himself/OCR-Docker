@@ -1,4 +1,4 @@
-# upload_pic
+# OCR Front-end
 Upload image to firebase
 
 ## Demonstration

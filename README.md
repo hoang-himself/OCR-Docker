@@ -1,10 +1,10 @@
-# Docker-backend
+# OCR Demo
 A docker repo for building some necessities for backend.
 
 # IMPORTANT
 - Go to your Firebase's project [service accounts](https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk).
 - Click Generate New Private Key.
-- Save as `serviceAccountKey.json` in the root folder.
+- Save as `serviceAccountKey.json` in `/back` folder.
 ### Not tested with duplicate files on Firebase.
 
 # How to use
@@ -19,12 +19,7 @@ git submodule update
 ```
 docker-compose up -d
 ```
-Server is available at `localhost:5000/`.
-
-## Extract latitude, longitude
-```
-localhost:5000/predict/<image>?crs=<crs>
-```
+Server is available at `localhost:8000/`.
 All images are saved in Firebase Storage.
 
 <br />

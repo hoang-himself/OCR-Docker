@@ -22,7 +22,9 @@ docker-compose up -d
 Server is available at `localhost:5000/`.
 
 ## Extract latitude, longitude
-```localhost:5000/predict/<image>?crs=<crs>```
+```
+localhost:5000/predict/<image>?crs=<crs>
+```
 All images are saved in Firebase Storage.
 
 <br />

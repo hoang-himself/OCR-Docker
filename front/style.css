@@ -1,0 +1,38 @@
+.top-bar-title {
+	padding-top:10px;
+}
+
+.center-container {
+	display: -webkit-flexbox;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-align: center;
+    -ms-flex-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+    justify-content: center;
+}
+
+.large-text {
+	font-size:4rem;
+}
+
+#so_hong_image {
+	width: 100%;
+}
+
+#map {
+	/*box-sizing: border-box;
+	width: 100%;*/
+	height: 300px;
+	display:none;
+	/*position: absolute;
+	top: 0;
+	bottom: 0;*/
+	width: auto;
+}
+
+canvas.mapboxgl-canvas {
+	width:100% !important;
+}

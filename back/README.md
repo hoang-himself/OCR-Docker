@@ -8,10 +8,10 @@ A docker repo for building some necessities for backend.
 ### Not tested with duplicate files on Firebase.
 
 # Usage
+### Update submodules
 ```
-localhost:5000/
+cd OCR-Docker &&\
+git submodule update --init
 ```
-```
-localhost:5000/predict/<image>?crs=<crs>
-```
+Server is available at `localhost:8000/`.\
 All images are downloaded from Firebase Storage.

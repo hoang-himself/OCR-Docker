@@ -12,14 +12,14 @@ A docker repo for building some necessities for backend.
 ### Update submodules
 ```
 cd OCR-Docker &&\
-git submodule update
+git submodule update --init
 ```
 
 ### Run with Docker Compose
 ```
 docker-compose up -d
 ```
-Server is available at `localhost:8000/`.
+Server is available at `localhost:8000/`.\
 All images are saved in Firebase Storage.
 
 <br />

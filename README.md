@@ -7,6 +7,10 @@ A docker repo for building some necessities for backend.
 - Save as `serviceAccountKey.json` in `/back` folder.
 ### Not tested with duplicate files on Firebase.
 
+# Known issues
+- Cannot use fetch() with Docker's internal network, currently using lvh.me, because [fuck Google](https://bugs.chromium.org/p/chromium/issues/detail?id=67743)
+- Firebase Storage takes quite long to refresh, and back-end fails to find the file. Maybe will implement front-end to save files to a Docker volume to process, then upload the file to Firebase.
+
 # How to use
 ### Download this repository
 ### Update submodules

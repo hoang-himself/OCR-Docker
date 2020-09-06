@@ -9,9 +9,7 @@ function successfullyGet() {
 	const file = document.querySelector("#photo").files[0];
 	const name = uuid().substring(0, 9) + file.name;
 	const crs = document.querySelector("#crs").value;
-	// https://stackoverflow.com/questions/43871637/no-access-control-allow-origin-header-is-present-on-the-requested-resource-whe
-	const proxyurl = "https://cors-anywhere.herokuapp.com/";
-	const link = "http://localhost:5000/predict/";
+	var link = "http://lvh.me:5000/predict/"; // TODO Use interal Docker network
 	link += name;
 	link += "?crs=";
 	link += crs;

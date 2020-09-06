@@ -1,17 +1,20 @@
+from typing import Optional
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 
 import sys
 import os
 import subprocess
 import ntpath
 
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import storage
+
 sys.path.append('/app/CRAFT/')
 from text_recognition import text_recognition
 from text_to_coordinate import text_to_coordinate
 
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import storage
 
 cred = credentials.Certificate('serviceAccountKey.json')
 
@@ -22,6 +25,15 @@ default_app = firebase_admin.initialize_app(cred, {
 bucket = storage.bucket(app=default_app)
 
 app = FastAPI()
+
+# * Fucking CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 os.chdir('/app/tmp')
 
@@ -44,8 +56,14 @@ def read_image(image: str, crs: int):
     input_text = text_recognition(image)
     lon, lat = text_to_coordinate(input_text, crs)
 
-    return 'https://www.google.com/maps/@?api=1&map_action=map&center=' + \
-        str(lat) + ',' + str(lon) + '&zoom=15'
+    lon = float(int(lon * 10000000) / 10000000)
+    lat = float(int(lat * 10000000) / 10000000)
+
+    # * Clean-up
+    command = 'rm /app/tmp/*'
+    process = subprocess.Popen(command, shell=True).wait()
+
+    return {'lon': lon, 'lat': lat}
 
 
 # * Correctly extract file name

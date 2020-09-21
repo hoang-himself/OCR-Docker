@@ -13,6 +13,10 @@ A docker repo for building some necessities for backend.
 
 # How to use
 ### Download this repository
+### Install git-lfs
+```
+sudo apt install git-lfs
+```
 ### Update submodules
 ```
 cd OCR-Docker &&\
@@ -21,7 +25,7 @@ git submodule update --init
 
 ### Run with Docker Compose
 ```
-docker-compose up -d
+docker-compose up --build -d
 ```
 Server is available at `localhost:8000/`.\
 All images are saved in Firebase Storage.

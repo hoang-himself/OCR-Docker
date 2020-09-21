@@ -1,6 +1,6 @@
 var percentage = 1;
 var switcher = 0;
-var speed = 0.1;
+var speed = 0.03;
 var able_draw_map = 0;
 function setup() {
   createCanvas(200, 200).parent("p5js");
@@ -27,24 +27,24 @@ function draw() {
 }
 
 function drawProgress(stop) {
-  translate(width/2, height/2);
-  rotate(-PI/2.0);
+  translate(width / 2, height / 2);
+  rotate(-PI / 2.0);
   noFill();
   strokeWeight(4);
-  arc(0,0,150,150,0,2*PI * stop / 100);
-  
-  fill(0,0,0);
-  rotate(PI/2);
+  arc(0, 0, 150, 150, 0, 2 * PI * stop / 100);
+
+  fill(0, 0, 0);
+  rotate(PI / 2);
   textSize(18);
   textAlign(CENTER);
-  text(round(stop)+"%",0,0);
+  text(round(stop) + "%", 0, 0);
 }
 
 function whichSpeed() {
   if (switcher == 0) {
     return 0;
   } else if (switcher == 1) {
-    return 0.1;
+    return 0.03;
   } else if (switcher == 2) {
     return 1;
   }

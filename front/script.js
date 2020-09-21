@@ -12,7 +12,7 @@ function successfullyGet(filename) {
   // https://stackoverflow.com/questions/43871637/no-access-control-allow-origin-header-is-present-on-the-requested-resource-whe
   // const proxyurl = "https://cors-anywhere.herokuapp.com/";
   // var link = "https://ocrbackend.azurewebsites.net/predict/";
-  var link = "http://lvh.me:8000/predict/";
+  var link = "http://lvh.me:5000/predict/";
   link += `${crs}-${filename}`;
   link += "?crs=";
   link += crs;
@@ -38,7 +38,6 @@ function successfullyGet(filename) {
 function predict() {
   document.querySelector("#p5js").style.display = "block";
   document.querySelector("#map").style.display = "none";
-  document.querySelector("#error").style.display = "none";
   percentage = 0;
 
   const crs = document.querySelector("#crs").value;
